@@ -6,7 +6,7 @@ export function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center py-20">
       <motion.div
-        className="w-12 h-12 rounded-full border-2 border-dark-700 border-t-primary-500"
+        className="w-12 h-12 rounded-full border-2 border-[#eee] border-t-[#1a1a1a]"
         animate={{ rotate: 360 }}
         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
       />
@@ -16,13 +16,13 @@ export function LoadingSpinner() {
 
 export function ProductCardSkeleton() {
   return (
-    <div className="glass-card overflow-hidden animate-pulse">
-      <div className="aspect-square bg-dark-800 shimmer" />
-      <div className="p-4 space-y-3">
-        <div className="h-3 bg-dark-700 rounded-full w-1/3" />
-        <div className="h-4 bg-dark-700 rounded-full w-3/4" />
-        <div className="h-3 bg-dark-700 rounded-full w-1/2" />
-        <div className="h-5 bg-dark-700 rounded-full w-1/4" />
+    <div className="overflow-hidden animate-pulse">
+      <div className="aspect-[3/4] bg-[#f5f4f0] rounded-lg shimmer mb-4" />
+      <div className="space-y-2">
+        <div className="h-3 bg-[#e8e6e0] rounded w-1/4" />
+        <div className="h-4 bg-[#e8e6e0] rounded w-3/4" />
+        <div className="h-3 bg-[#e8e6e0] rounded w-1/2" />
+        <div className="h-5 bg-[#e8e6e0] rounded w-1/3" />
       </div>
     </div>
   );
@@ -45,11 +45,11 @@ export function EmptyState({
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center justify-center py-20 text-center"
     >
-      <div className="w-20 h-20 rounded-2xl bg-dark-800 flex items-center justify-center mb-4 text-dark-500">
+      <div className="text-[#ddd] mb-4">
         {icon}
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2" style={{ fontFamily: "var(--font-outfit)" }}>{title}</h3>
-      <p className="text-dark-400 text-sm max-w-sm mb-6">{description}</p>
+      <h3 className="text-base font-semibold text-[#1a1a1a] mb-2">{title}</h3>
+      <p className="text-[#aaa] text-sm max-w-sm mb-6">{description}</p>
       {action}
     </motion.div>
   );

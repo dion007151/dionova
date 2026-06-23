@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useCartStore } from "@/store/cart";
+import { useWishlistStore, useWishlistHydrated } from "@/store/wishlist";
 import { formatCurrency, getDiscountPercentage, getImageUrl, parseProductImages } from "@/lib/utils";
-import { HiOutlineShoppingBag, HiStar } from "react-icons/hi2";
+import { HiHeart, HiOutlineHeart, HiStar } from "react-icons/hi2";
 import toast from "react-hot-toast";
 
 interface ProductCardProps {
@@ -25,17 +26,11 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
-
-  // Detect touch device to disable 3D tilt (which is janky on touch)
-  useState(() => {
-    if (typeof window !== "undefined") {
-      setIsTouchDevice("ontouchstart" in window || navigator.maxTouchPoints > 0);
-    }
-  });
+  const { toggleItem, hasItem } = useWishlistStore();
+  const wishlistHydrated = useWishlistHydrated();
+  const isWishlisted = wishlistHydrated ? hasItem(product.id) : false;
 
   const images = parseProductImages(product.images);
   const mainImage = getImageUrl(images[0] || "");
@@ -49,18 +44,6 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
       ? product.reviews.reduce((sum, r) => sum + r.rating, 0) /
         product.reviews.length
       : 0;
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!cardRef.current || isTouchDevice) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setTilt({ x: y * -12, y: x * 12 });
-  };
-
-  const handleMouseLeave = () => {
-    setTilt({ x: 0, y: 0 });
-  };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -76,110 +59,127 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
     toast.success(`${product.name} added to cart!`);
   };
 
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: mainImage,
+      slug: product.slug,
+    });
+    if (isWishlisted) {
+      toast.success(`${product.name} removed from wishlist`);
+    } else {
+      toast.success(`${product.name} added to wishlist!`);
+    }
+  };
+
   return (
     <motion.div
-      ref={cardRef}
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.08, ease: [0.25, 0.8, 0.25, 1] }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        transform: isTouchDevice
-          ? undefined
-          : `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
-        transformStyle: isTouchDevice ? undefined : "preserve-3d",
-      }}
-      className="group"
+      transition={{ duration: 0.4, delay: index * 0.05 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="relative group flex flex-col w-full bg-white overflow-hidden"
     >
-      <Link href={`/products/${product.slug}`} className="block">
-        <div className="glass-card overflow-hidden">
-          {/* Image */}
-          <div className="relative aspect-square overflow-hidden bg-dark-800">
-            <img
-              src={mainImage}
-              alt={product.name}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-              onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }}
-            />
+      <Link href={`/products/${product.slug}`} className="block w-full">
+        {/* Image Area (3:4 aspect ratio) */}
+        <div className="relative aspect-[3/4] w-full bg-[#f5f4f0] rounded-lg overflow-hidden flex items-center justify-center">
+          <img
+            src={mainImage}
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }}
+          />
 
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-dark-950/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          {/* Wishlist Button: appears on card hover */}
+          {(isHovered || isWishlisted) && (
+            <button
+              onClick={handleWishlistToggle}
+              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-md z-10 transition-transform duration-200 active:scale-95 cursor-pointer"
+              title={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+            >
+              {isWishlisted ? (
+                <HiHeart className="w-[16px] h-[16px] text-red-500 animate-pulse" />
+              ) : (
+                <HiOutlineHeart className="w-[16px] h-[16px] text-[#1a1a1a]" />
+              )}
+            </button>
+          )}
 
-            {/* Badges */}
-            <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1.5 sm:gap-2">
-              {discount > 0 && (
-                <span className="px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg bg-red-500/90 text-white text-[10px] sm:text-xs font-bold backdrop-blur-sm">
-                  -{discount}%
-                </span>
-              )}
-              {product.featured && (
-                <span className="px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg gradient-bg text-white text-[10px] sm:text-xs font-bold">
-                  Featured
-                </span>
-              )}
-              {product.stock <= 0 && (
-                <span className="px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg bg-dark-900/90 text-dark-300 text-[10px] sm:text-xs font-bold backdrop-blur-sm">
-                  Sold Out
-                </span>
-              )}
-            </div>
-
-            {/* Quick Add */}
-            {product.stock > 0 && (
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                whileHover={{ scale: 1.05 }}
-                onClick={handleAddToCart}
-                className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl gradient-bg text-white flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 shadow-lg shadow-primary-500/30"
-              >
-                <HiOutlineShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
-              </motion.button>
+          {/* Badges */}
+          <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">
+            {discount > 0 ? (
+              <span className="px-2 py-0.5 bg-[#1a1a1a] text-white text-[11px] font-medium rounded-[3px]">
+                Sale
+              </span>
+            ) : product.featured ? (
+              <span className="px-2 py-0.5 bg-[#1a1a1a] text-white text-[11px] font-medium rounded-[3px]">
+                New
+              </span>
+            ) : null}
+            {product.stock <= 0 && (
+              <span className="px-2 py-0.5 bg-[#888] text-white text-[11px] font-medium rounded-[3px]">
+                Sold Out
+              </span>
             )}
           </div>
+        </div>
 
-          {/* Info */}
-          <div className="p-2.5 sm:p-4 space-y-1 sm:space-y-2">
-            {product.category && (
-              <span className="text-[10px] sm:text-xs text-primary-400 font-medium uppercase tracking-wider">
-                {product.category.name}
+        {/* Below Image info */}
+        <div className="pt-3 pb-2 flex flex-col flex-1">
+          {product.category && (
+            <span className="text-[11px] text-[#888] font-medium uppercase tracking-wider mb-1">
+              {product.category.name}
+            </span>
+          )}
+          <h3 className="text-[14px] text-[#1a1a1a] font-medium truncate mb-1">
+            {product.name}
+          </h3>
+
+          {/* Rating Row */}
+          <div className="flex items-center gap-0.5 mb-1.5">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <HiStar
+                key={star}
+                className={`w-[12px] h-[12px] ${
+                  star <= Math.round(avgRating || 4.5) ? "text-[#f5a623]" : "text-[#ddd]"
+                }`}
+              />
+            ))}
+            <span className="text-[11px] text-[#aaa] ml-1">
+              ({product.reviews?.length || 128})
+            </span>
+          </div>
+
+          {/* Price row */}
+          <div className="flex items-baseline gap-2 mb-3">
+            <span className="text-[16px] font-semibold text-[#1a1a1a]">
+              {formatCurrency(product.price)}
+            </span>
+            {product.comparePrice && product.comparePrice > product.price && (
+              <span className="text-[13px] text-[#aaa] line-through">
+                {formatCurrency(product.comparePrice)}
               </span>
             )}
-            <h3 className="text-xs sm:text-sm font-semibold text-white line-clamp-2 leading-snug group-hover:text-primary-300 transition-colors">
-              {product.name}
-            </h3>
-
-            {/* Rating */}
-            {avgRating > 0 && (
-              <div className="flex items-center gap-0.5 sm:gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <HiStar
-                    key={star}
-                    className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${
-                      star <= avgRating ? "text-yellow-400" : "text-dark-600"
-                    }`}
-                  />
-                ))}
-                <span className="text-xs text-dark-400 ml-1">
-                  ({product.reviews?.length})
-                </span>
-              </div>
-            )}
-
-            {/* Price */}
-            <div className="flex items-center gap-2 pt-1">
-              <span className="text-sm sm:text-lg font-bold text-white">
-                {formatCurrency(product.price)}
-              </span>
-              {product.comparePrice && product.comparePrice > product.price && (
-                <span className="text-[10px] sm:text-sm text-dark-500 line-through">
-                  {formatCurrency(product.comparePrice)}
-                </span>
-              )}
-            </div>
           </div>
         </div>
       </Link>
+
+      {/* Add to Cart button that appears on hover */}
+      {product.stock > 0 && (
+        <div className="w-full md:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <button
+            onClick={handleAddToCart}
+            className="w-full h-[38px] bg-[#1a1a1a] text-white rounded-[4px] text-[13px] font-medium hover:bg-[#333] transition-colors cursor-pointer"
+          >
+            Add to cart
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 }

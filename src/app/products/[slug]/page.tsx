@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useCartStore } from "@/store/cart";
+import { Reviews } from "@/components/ui/Reviews";
 import { formatCurrency, getDiscountPercentage, getImageUrl, parseProductImages } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/Shared";
 import toast from "react-hot-toast";
@@ -153,9 +154,10 @@ export default function ProductDetailPage({
               </div>
             </div>
 
-            {images.length > 1 && (
+            {/* Only show thumbnails if there are at least 2 unique images */}
+            {[...new Set(images)].length > 1 && (
               <div className="grid grid-cols-4 gap-3">
-                {images.map((img, i) => (
+                {[...new Set(images)].map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
@@ -302,59 +304,7 @@ export default function ProductDetailPage({
         </div>
 
         {/* Reviews Section */}
-        {product.reviews.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mt-20"
-          >
-            <h2
-              className="text-2xl font-bold text-white mb-8"
-              style={{ fontFamily: "var(--font-outfit)" }}
-            >
-              Customer Reviews
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              {product.reviews.map((review) => (
-                <div key={review.id} className="glass-card p-6 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full gradient-bg flex items-center justify-center text-white font-semibold text-sm">
-                        {review.user.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-white">
-                          {review.user.name}
-                        </p>
-                        <p className="text-xs text-dark-500">
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-0.5">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <HiStar
-                          key={star}
-                          className={`w-4 h-4 ${
-                            star <= review.rating
-                              ? "text-yellow-400"
-                              : "text-dark-600"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  {review.comment && (
-                    <p className="text-sm text-dark-300 leading-relaxed">
-                      {review.comment}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </motion.section>
-        )}
+        <Reviews productId={product.id} />
       </div>
     </div>
   );

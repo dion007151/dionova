@@ -46,33 +46,68 @@ function ProductsContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const currentCategory = searchParams.get("category") || "";
+  const currentCategory = searchParams.get("category")?.split(",").filter(Boolean) || [];
   const currentSort = searchParams.get("sort") || "newest";
   const currentSearch = searchParams.get("search") || "";
   const currentFeatured = searchParams.get("featured") || "";
   const currentPage = parseInt(searchParams.get("page") || "1");
+  const minPrice = parseInt(searchParams.get("minPrice") || "0");
+  const maxPrice = parseInt(searchParams.get("maxPrice") || "10000");
+
+  const [priceRange, setPriceRange] = useState<[number, number]>([minPrice, maxPrice]);
+
+  const updateUrl = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    if (key !== "page") params.set("page", "1");
+    window.history.pushState(null, "", `/products?${params.toString()}`);
+    window.dispatchEvent(new Event("popstate"));
+  };
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>, index: 0 | 1) => {
+    const newRange = [...priceRange] as [number, number];
+    newRange[index] = parseInt(e.target.value);
+    setPriceRange(newRange);
+  };
+
+  const applyPriceFilter = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("minPrice", priceRange[0].toString());
+    params.set("maxPrice", priceRange[1].toString());
+    params.set("page", "1");
+    window.history.pushState(null, "", `/products?${params.toString()}`);
+    window.dispatchEvent(new Event("popstate"));
+  };
+
+  const toggleCategory = (slug: string) => {
+    const newCats = currentCategory.includes(slug)
+      ? currentCategory.filter(c => c !== slug)
+      : [...currentCategory, slug];
+    updateUrl("category", newCats.join(","));
+  };
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (currentCategory) params.set("category", currentCategory);
-      if (currentSort) params.set("sort", currentSort);
-      if (currentSearch) params.set("search", currentSearch);
-      if (currentFeatured) params.set("featured", currentFeatured);
-      params.set("page", currentPage.toString());
+      const params = new URLSearchParams(window.location.search);
       params.set("limit", "12");
 
       const res = await fetch(`/api/products?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setProducts(Array.isArray(data.products) ? data.products : []);
       setTotalPages(data.pagination?.totalPages || 1);
     } catch (error) {
       console.error("Failed to fetch products:", error);
+      setProducts([]); // Fallback to empty state
     } finally {
       setLoading(false);
     }
-  }, [currentCategory, currentSort, currentSearch, currentFeatured, currentPage]);
+  }, []);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -89,19 +124,6 @@ function ProductsContent() {
     fetchCategories();
   }, [fetchProducts, fetchCategories]);
 
-  const updateUrl = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
-    if (key !== "page") params.set("page", "1");
-    window.history.pushState(null, "", `/products?${params.toString()}`);
-    // Trigger re-fetch
-    window.dispatchEvent(new Event("popstate"));
-  };
-
   useEffect(() => {
     const handler = () => fetchProducts();
     window.addEventListener("popstate", handler);
@@ -111,7 +133,6 @@ function ProductsContent() {
   return (
     <div className="min-h-screen pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -123,8 +144,6 @@ function ProductsContent() {
           >
             {currentSearch
               ? `Results for "${currentSearch}"`
-              : currentCategory
-              ? categories.find((c) => c.slug === currentCategory)?.name || "Products"
               : currentFeatured
               ? "Featured Products"
               : "All Products"}
@@ -135,53 +154,45 @@ function ProductsContent() {
         </motion.div>
 
         <div className="flex gap-8">
-          {/* Sidebar Filters - Desktop */}
           <motion.aside
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="hidden lg:block w-64 flex-shrink-0"
           >
             <div className="glass-card p-6 sticky top-24">
-              <h3
-                className="text-sm font-semibold text-white mb-4"
-                style={{ fontFamily: "var(--font-outfit)" }}
-              >
+              <h3 className="text-sm font-semibold text-white mb-4" style={{ fontFamily: "var(--font-outfit)" }}>
                 Categories
               </h3>
-              <div className="space-y-1">
-                <button
-                  onClick={() => updateUrl("category", "")}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${
-                    !currentCategory
-                      ? "bg-primary-500/15 text-primary-400 font-medium"
-                      : "text-dark-300 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  All Products
-                </button>
+              <div className="space-y-2">
                 {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => updateUrl("category", cat.slug)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center justify-between ${
-                      currentCategory === cat.slug
-                        ? "bg-primary-500/15 text-primary-400 font-medium"
-                        : "text-dark-300 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    {cat.name}
-                    <span className="text-xs text-dark-500">
-                      {cat._count.products}
-                    </span>
-                  </button>
+                  <label key={cat.id} className="flex items-center gap-3 cursor-pointer group">
+                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${currentCategory.includes(cat.slug) ? 'bg-primary-500 border-primary-500' : 'border-white/20 group-hover:border-white/50 bg-white/5'}`}>
+                      {currentCategory.includes(cat.slug) && <HiOutlineXMark className="w-4 h-4 text-white font-bold rotate-45" />}
+                    </div>
+                    <input type="checkbox" className="hidden" checked={currentCategory.includes(cat.slug)} onChange={() => toggleCategory(cat.slug)} />
+                    <span className="text-sm text-dark-300 group-hover:text-white transition-all flex-1">{cat.name}</span>
+                    <span className="text-xs text-dark-500">{cat._count.products}</span>
+                  </label>
                 ))}
               </div>
 
               <div className="border-t border-white/5 mt-6 pt-6">
-                <h3
-                  className="text-sm font-semibold text-white mb-4"
-                  style={{ fontFamily: "var(--font-outfit)" }}
-                >
+                <h3 className="text-sm font-semibold text-white mb-4" style={{ fontFamily: "var(--font-outfit)" }}>
+                  Price Range
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <input type="number" value={priceRange[0]} onChange={(e) => handlePriceChange(e, 0)} className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-primary-500/50 outline-none" min="0" max={priceRange[1]} />
+                    <span className="text-dark-400">-</span>
+                    <input type="number" value={priceRange[1]} onChange={(e) => handlePriceChange(e, 1)} className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-primary-500/50 outline-none" min={priceRange[0]} />
+                  </div>
+                  <input type="range" min="0" max="10000" step="100" value={priceRange[1]} onChange={(e) => handlePriceChange(e, 1)} className="w-full accent-primary-500" />
+                  <button onClick={applyPriceFilter} className="w-full py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg text-sm transition-all font-medium">Apply</button>
+                </div>
+              </div>
+
+              <div className="border-t border-white/5 mt-6 pt-6">
+                <h3 className="text-sm font-semibold text-white mb-4" style={{ fontFamily: "var(--font-outfit)" }}>
                   Sort By
                 </h3>
                 <div className="space-y-1">
@@ -203,7 +214,6 @@ function ProductsContent() {
             </div>
           </motion.aside>
 
-          {/* Mobile Filter Toggle */}
           <div className="lg:hidden fixed bottom-6 right-4 sm:right-6 z-30">
             <button
               onClick={() => setFilterOpen(true)}
@@ -214,7 +224,6 @@ function ProductsContent() {
             </button>
           </div>
 
-          {/* Mobile Filter Drawer */}
           <AnimatePresence>
             {filterOpen && (
               <>
@@ -236,69 +245,47 @@ function ProductsContent() {
                     <h3 className="text-lg font-bold text-white" style={{ fontFamily: "var(--font-outfit)" }}>
                       Filters
                     </h3>
-                    <button
-                      onClick={() => setFilterOpen(false)}
-                      className="p-2 rounded-xl hover:bg-white/5"
-                    >
+                    <button onClick={() => setFilterOpen(false)} className="p-2 rounded-xl hover:bg-white/5">
                       <HiOutlineXMark className="w-5 h-5 text-dark-400" />
                     </button>
                   </div>
 
                   <div className="space-y-6">
                     <div>
-                      <h4 className="text-sm font-semibold text-dark-300 mb-3">
-                        Categories
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => {
-                            updateUrl("category", "");
-                            setFilterOpen(false);
-                          }}
-                          className={`px-4 py-2 rounded-xl text-sm ${
-                            !currentCategory
-                              ? "gradient-bg text-white"
-                              : "glass-light text-dark-300"
-                          }`}
-                        >
-                          All
-                        </button>
+                      <h4 className="text-sm font-semibold text-dark-300 mb-3">Categories</h4>
+                      <div className="space-y-2">
                         {categories.map((cat) => (
-                          <button
-                            key={cat.id}
-                            onClick={() => {
-                              updateUrl("category", cat.slug);
-                              setFilterOpen(false);
-                            }}
-                            className={`px-4 py-2 rounded-xl text-sm ${
-                              currentCategory === cat.slug
-                                ? "gradient-bg text-white"
-                                : "glass-light text-dark-300"
-                            }`}
-                          >
-                            {cat.name}
-                          </button>
+                          <label key={cat.id} className="flex items-center gap-3 cursor-pointer group">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${currentCategory.includes(cat.slug) ? 'bg-primary-500 border-primary-500' : 'border-white/20 group-hover:border-white/50 bg-white/5'}`}>
+                              {currentCategory.includes(cat.slug) && <HiOutlineXMark className="w-4 h-4 text-white font-bold rotate-45" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={currentCategory.includes(cat.slug)} onChange={() => toggleCategory(cat.slug)} />
+                            <span className="text-sm text-dark-300 group-hover:text-white transition-all flex-1">{cat.name}</span>
+                          </label>
                         ))}
                       </div>
                     </div>
 
                     <div>
-                      <h4 className="text-sm font-semibold text-dark-300 mb-3">
-                        Sort By
-                      </h4>
+                      <h4 className="text-sm font-semibold text-dark-300 mb-3">Price Range</h4>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <input type="number" value={priceRange[0]} onChange={(e) => handlePriceChange(e, 0)} className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white" min="0" max={priceRange[1]} />
+                          <span className="text-dark-400">-</span>
+                          <input type="number" value={priceRange[1]} onChange={(e) => handlePriceChange(e, 1)} className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white" min={priceRange[0]} />
+                        </div>
+                        <button onClick={() => { applyPriceFilter(); setFilterOpen(false); }} className="w-full py-2 bg-primary-500 text-white rounded-lg text-sm transition-all font-medium">Apply Price Filter</button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-semibold text-dark-300 mb-3">Sort By</h4>
                       <div className="flex flex-wrap gap-2">
                         {sortOptions.map((opt) => (
                           <button
                             key={opt.value}
-                            onClick={() => {
-                              updateUrl("sort", opt.value);
-                              setFilterOpen(false);
-                            }}
-                            className={`px-4 py-2 rounded-xl text-sm ${
-                              currentSort === opt.value
-                                ? "gradient-bg text-white"
-                                : "glass-light text-dark-300"
-                            }`}
+                            onClick={() => { updateUrl("sort", opt.value); setFilterOpen(false); }}
+                            className={`px-4 py-2 rounded-xl text-sm ${currentSort === opt.value ? "gradient-bg text-white" : "glass-light text-dark-300"}`}
                           >
                             {opt.label}
                           </button>
@@ -311,7 +298,6 @@ function ProductsContent() {
             )}
           </AnimatePresence>
 
-          {/* Product Grid */}
           <div className="flex-1">
             {loading ? (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
@@ -344,7 +330,6 @@ function ProductsContent() {
                   ))}
                 </div>
 
-                {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 mt-12">
                     {Array.from({ length: totalPages }).map((_, i) => (

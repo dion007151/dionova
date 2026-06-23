@@ -6,12 +6,42 @@ import Link from "next/link";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { ProductCardSkeleton } from "@/components/ui/Shared";
 import {
-  HiOutlineArrowRight,
   HiOutlineSparkles,
-  HiOutlineTruck,
-  HiOutlineShieldCheck,
-  HiOutlineCreditCard,
+  HiOutlineShoppingBag,
 } from "react-icons/hi2";
+import { 
+  TbDeviceLaptop, 
+  TbHanger, 
+  TbHome, 
+  TbSparkles, 
+  TbRun, 
+  TbBook,
+  TbPackage,
+  TbTruck,
+  TbLock,
+  TbRefresh,
+  TbMedal,
+  TbStar,
+  TbMoodSad
+} from "react-icons/tb";
+
+const categoryIconMap: Record<string, React.ReactNode> = {
+  "electronics": <TbDeviceLaptop className="w-8 h-8" />,
+  "fashion": <TbHanger className="w-8 h-8" />,
+  "home-living": <TbHome className="w-8 h-8" />,
+  "beauty": <TbSparkles className="w-8 h-8" />,
+  "sports": <TbRun className="w-8 h-8" />,
+  "books": <TbBook className="w-8 h-8" />,
+};
+
+const categoryBgColors = [
+  "bg-[#f5f4f0] hover:bg-[#d9d5ce]",
+  "bg-[#ede9e3] hover:bg-[#d9d5ce]",
+  "bg-[#e8e4dd] hover:bg-[#d9d5ce]",
+  "bg-[#f5f4f0] hover:bg-[#d9d5ce]",
+  "bg-[#ede9e3] hover:bg-[#d9d5ce]",
+  "bg-[#e8e4dd] hover:bg-[#d9d5ce]"
+];
 
 interface Product {
   id: string;
@@ -34,57 +64,73 @@ interface Category {
   _count: { products: number };
 }
 
-const features = [
+const trustItems = [
   {
-    icon: <HiOutlineTruck className="w-6 h-6" />,
-    title: "Free Shipping",
-    desc: "On orders over ₱2,000",
+    icon: <TbTruck className="w-6 h-6 text-[#1a1a1a]" />,
+    title: "Free shipping",
+    desc: "On orders over ₱999",
   },
   {
-    icon: <HiOutlineShieldCheck className="w-6 h-6" />,
-    title: "Secure Payment",
+    icon: <TbLock className="w-6 h-6 text-[#1a1a1a]" />,
+    title: "Secure payment",
     desc: "256-bit SSL encryption",
   },
   {
-    icon: <HiOutlineCreditCard className="w-6 h-6" />,
-    title: "Easy Returns",
-    desc: "30-day return policy",
+    icon: <TbRefresh className="w-6 h-6 text-[#1a1a1a]" />,
+    title: "Easy returns",
+    desc: "30-day hassle-free returns",
   },
   {
-    icon: <HiOutlineSparkles className="w-6 h-6" />,
-    title: "Premium Quality",
-    desc: "Curated collections",
+    icon: <TbMedal className="w-6 h-6 text-[#1a1a1a]" />,
+    title: "Premium quality",
+    desc: "Curated for excellence",
   },
+];
+
+const customerReviews = [
+  {
+    text: "Absolutely love everything I've ordered — quality is unreal for the price.",
+    author: "Sarah K.",
+    initials: "SK"
+  },
+  {
+    text: "Fast delivery and beautiful packaging. Will definitely be ordering again.",
+    author: "Michael T.",
+    initials: "MT"
+  },
+  {
+    text: "Found my new go-to shop. The curation is spot on.",
+    author: "Elena R.",
+    initials: "ER"
+  }
 ];
 
 export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [newProducts, setNewProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterTab, setFilterTab] = useState<"all" | "new" | "bestseller" | "under500">("all");
+
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, 200]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, 150]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [featuredRes, categoriesRes, newRes] = await Promise.all([
-          fetch("/api/products?featured=true&limit=4"),
+        const [featuredRes, categoriesRes] = await Promise.all([
+          fetch("/api/products?limit=12"),
           fetch("/api/categories"),
-          fetch("/api/products?sort=newest&limit=8"),
         ]);
         const featuredData = await featuredRes.json();
         const categoriesData = await categoriesRes.json();
-        const newData = await newRes.json();
 
         setFeaturedProducts(Array.isArray(featuredData.products) ? featuredData.products : []);
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-        setNewProducts(Array.isArray(newData.products) ? newData.products : []);
       } catch (error) {
         console.error("Failed to fetch homepage data:", error);
       } finally {
@@ -94,280 +140,304 @@ export default function HomePage() {
     fetchData();
   }, []);
 
+  // Filter products according to selected filter tab
+  const getFilteredProducts = () => {
+    switch (filterTab) {
+      case "new":
+        return featuredProducts.slice(0, 4); // Simulate newest
+      case "bestseller":
+        return featuredProducts.filter(p => p.featured).slice(0, 4);
+      case "under500":
+        return featuredProducts.filter(p => p.price < 500).slice(0, 4);
+      case "all":
+      default:
+        return featuredProducts.slice(0, 8);
+    }
+  };
+
+  const filteredProducts = getFilteredProducts();
+
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center overflow-hidden">
-        {/* Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-48 sm:w-72 lg:w-96 h-48 sm:h-72 lg:h-96 rounded-full bg-primary-500/10 blur-[80px] sm:blur-[120px] animate-float" />
-          <div className="absolute bottom-1/4 right-1/4 w-40 sm:w-64 lg:w-80 h-40 sm:h-64 lg:h-80 rounded-full bg-primary-600/8 blur-[60px] sm:blur-[100px] animate-float" style={{ animationDelay: "-3s" }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] sm:w-[400px] lg:w-[600px] h-[280px] sm:h-[400px] lg:h-[600px] rounded-full border border-white/[0.02]" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] sm:w-[280px] lg:w-[400px] h-[200px] sm:h-[280px] lg:h-[400px] rounded-full border border-white/[0.03]" />
-        </div>
-
-        <motion.div
-          style={{ y: heroY, opacity: heroOpacity }}
-          className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 text-center"
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.25, 0.8, 0.25, 1] }}
+    <div className="min-h-screen bg-white">
+      {/* 2. HERO SECTION */}
+      <section ref={heroRef} className="relative min-h-[600px] flex items-center bg-white overflow-hidden border-b border-[#eee]">
+        <div className="w-full max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-10 items-stretch">
+          
+          {/* LEFT COLUMN (55%) */}
+          <motion.div 
+            style={{ y: heroY, opacity: heroOpacity }}
+            className="lg:col-span-6 px-6 sm:px-12 lg:pl-20 lg:pr-12 py-16 sm:py-20 lg:py-24 flex flex-col justify-center text-left"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1, duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-light mb-8"
-            >
-              <HiOutlineSparkles className="w-4 h-4 text-primary-400" />
-              <span className="text-sm font-medium text-dark-200">
-                Premium Marketplace — 2026 Collection
-              </span>
-            </motion.div>
-
-            <h1
-              className="text-3xl xs:text-4xl sm:text-6xl lg:text-8xl font-bold tracking-tight mb-4 sm:mb-6"
+            <span className="text-[11px] font-medium tracking-[0.12em] text-[#888] uppercase mb-3">
+              New Season 2025
+            </span>
+            
+            <h1 
+              className="text-[40px] sm:text-[52px] font-bold text-[#1a1a1a] leading-[1.1] mb-6"
               style={{ fontFamily: "var(--font-outfit)" }}
             >
-              <span className="text-white">Discover</span>
-              <br />
-              <span className="gradient-text">Extraordinary</span>
+              Discover <span className="italic font-normal">extraordinary</span> things.
             </h1>
 
-            <p className="text-dark-300 text-sm sm:text-lg lg:text-xl max-w-2xl mx-auto mb-6 sm:mb-10 leading-relaxed px-2 sm:px-0">
-              Curated collections of premium products designed for those who
-              appreciate the finer things. Shop with confidence.
+            <p className="text-[16px] text-[#666] leading-[1.6] max-w-[420px] mb-8">
+              Curated premium products delivered to your door. Discover what makes everyday life exceptional.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/products" className="btn-primary py-4 px-8 text-base">
-                Explore Collection
-                <HiOutlineArrowRight className="w-5 h-5" />
-              </Link>
-              <Link
-                href="/products?featured=true"
-                className="btn-secondary py-4 px-8 text-base"
+            {/* CTA Row */}
+            <div className="flex items-center gap-6 mb-12">
+              <Link 
+                href="/products" 
+                className="h-[48px] px-8 bg-[#1a1a1a] text-white text-[14px] font-medium rounded-[4px] flex items-center justify-center hover:bg-[#333] transition-colors"
               >
-                View Featured
+                Shop now
               </Link>
+              <Link 
+                href="/products?featured=true" 
+                className="text-[14px] font-medium text-[#1a1a1a] hover:underline"
+              >
+                View lookbook &rarr;
+              </Link>
+            </div>
+
+            {/* Stats row */}
+            <div className="border-t border-[#eee] pt-6 grid grid-cols-3 gap-4">
+              {[
+                { value: "500+", label: "Products" },
+                { value: "10k+", label: "Customers" },
+                { value: "4.9", label: "Rating" }
+              ].map((stat, idx) => (
+                <div key={stat.label} className="flex items-center gap-4">
+                  {idx > 0 && <div className="h-8 w-[1px] bg-[#eee]" />}
+                  <div>
+                    <div className="text-[22px] font-semibold text-[#1a1a1a] leading-none mb-1">
+                      {stat.value}
+                    </div>
+                    <div className="text-[12px] text-[#888]">{stat.label}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </motion.div>
 
-          {/* Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-            className="flex items-center justify-center gap-6 sm:gap-12 mt-10 sm:mt-16"
-          >
-            {[
-              { value: "500+", label: "Products" },
-              { value: "10k+", label: "Customers" },
-              { value: "4.9", label: "Rating" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-2xl font-bold text-white" style={{ fontFamily: "var(--font-outfit)" }}>
-                  {stat.value}
-                </div>
-                <div className="text-xs text-dark-400 mt-1">{stat.label}</div>
-              </div>
-            ))}
-          </motion.div>
-        </motion.div>
-      </section>
+          {/* RIGHT COLUMN (45%) */}
+          <div className="lg:col-span-4 bg-[#f5f4f0] p-8 sm:p-12 lg:p-0 flex items-center justify-center relative min-h-[450px]">
+            {/* Main Product Image Placeholder */}
+            <div className="w-[320px] h-[400px] sm:w-[400px] sm:h-[500px] bg-[#e8e6e0] rounded-[8px] overflow-hidden shadow-sm relative flex items-center justify-center">
+              <img 
+                src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=600&auto=format&fit=crop"
+                alt="Featured Look" 
+                className="w-full h-full object-cover mix-blend-multiply opacity-80"
+              />
+            </div>
 
-      {/* Features Bar */}
-      <section className="relative z-10 -mt-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="glass-card p-6 lg:p-8">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-              {features.map((feature, i) => (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="flex items-center gap-4"
+            {/* Floating Product Card bottom-left */}
+            <div className="absolute bottom-6 left-6 sm:bottom-12 sm:left-12 bg-white rounded-[8px] p-3 sm:p-4 border border-[#eee] flex items-center gap-3 shadow-md max-w-[220px]">
+              <div className="w-8 h-8 rounded bg-[#f5f4f0] flex items-center justify-center text-[#1a1a1a]">
+                <TbPackage className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] text-[#888] block uppercase">Just arrived</span>
+                <span className="text-[13px] font-bold text-[#1a1a1a] block truncate max-w-[140px]">Nova Audio Headset</span>
+                <span className="text-[13px] text-[#888] block">₱8,990</span>
+              </div>
+            </div>
+
+            {/* Category pills floating top-right */}
+            <div className="absolute top-6 right-6 sm:top-12 sm:right-12 flex flex-col gap-2 z-10">
+              {["Electronics", "Fashion", "Home"].map((pill) => (
+                <Link
+                  key={pill}
+                  href={`/products?category=${pill.toLowerCase().replace(" & ", "-")}`}
+                  className="bg-white border border-[#ddd] rounded-[20px] text-[11px] font-medium text-[#1a1a1a] px-3.5 py-1 text-center shadow-xs hover:border-[#1a1a1a] transition-all"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-400 flex-shrink-0">
-                    {feature.icon}
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-white">
-                      {feature.title}
-                    </h3>
-                    <p className="text-xs text-dark-400">{feature.desc}</p>
-                  </div>
-                </motion.div>
+                  {pill}
+                </Link>
               ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Categories */}
+      {/* 3. CATEGORIES SECTION */}
       {categories.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="flex items-end justify-between mb-10"
-          >
+        <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-8">
             <div>
-              <h2
-                className="text-3xl lg:text-4xl font-bold text-white"
-                style={{ fontFamily: "var(--font-outfit)" }}
-              >
-                Shop by <span className="gradient-text">Category</span>
+              <span className="text-[13px] text-[#888] tracking-[0.1em] font-medium uppercase mb-1.5 block">
+                Shop by category
+              </span>
+              <h2 className="text-[28px] font-semibold text-[#1a1a1a]">
+                Find what you love
               </h2>
-              <p className="text-dark-400 mt-2">Find what you&apos;re looking for</p>
             </div>
-            <Link
-              href="/products"
-              className="hidden sm:flex items-center gap-2 text-sm text-primary-400 hover:text-primary-300 font-medium transition-colors"
+            <Link 
+              href="/products?view=categories" 
+              className="text-[13px] text-[#1a1a1a] font-medium hover:underline mt-2 sm:mt-0 flex items-center gap-1"
             >
-              View All <HiOutlineArrowRight className="w-4 h-4" />
+              See all categories &rarr;
             </Link>
-          </motion.div>
+          </div>
 
+          {/* Grid of square categories */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {categories.map((cat, i) => (
-              <motion.div
-                key={cat.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-              >
-                <Link
+            {categories.map((cat, i) => {
+              const bg = categoryBgColors[i % categoryBgColors.length];
+              const icon = categoryIconMap[cat.slug] || <TbPackage className="w-8 h-8" />;
+              return (
+                <Link 
+                  key={cat.id}
                   href={`/products?category=${cat.slug}`}
-                  className="block glass-card p-5 text-center group"
+                  className={`aspect-square ${bg} rounded-[12px] flex flex-col items-center justify-center p-6 transition-all duration-200 group cursor-pointer`}
                 >
-                  <div className="w-14 h-14 rounded-2xl gradient-bg mx-auto mb-3 flex items-center justify-center text-2xl opacity-80 group-hover:opacity-100 transition-opacity shadow-lg shadow-primary-500/20">
-                    {cat.image || "📦"}
+                  <div className="text-[#1a1a1a] mb-3 transition-transform duration-200 ease-out group-hover:scale-110">
+                    {icon}
                   </div>
-                  <h3 className="text-sm font-semibold text-white mb-1">
+                  <span className="text-[13px] font-medium text-[#1a1a1a] text-center block">
                     {cat.name}
-                  </h3>
-                  <p className="text-xs text-dark-500">
-                    {cat._count.products} items
-                  </p>
+                  </span>
+                  <span className="text-[11px] text-[#888] mt-1 block">
+                    {cat._count.products} products
+                  </span>
                 </Link>
-              </motion.div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
 
-      {/* Featured Products */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="flex items-end justify-between mb-10"
-        >
+      {/* 4. PRODUCT GRID SECTION */}
+      <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-[80px] pb-16">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
           <div>
-            <h2
-              className="text-3xl lg:text-4xl font-bold text-white"
-              style={{ fontFamily: "var(--font-outfit)" }}
-            >
-              Featured <span className="gradient-text">Picks</span>
+            <span className="text-[11px] text-[#888] tracking-[0.1em] font-medium uppercase block mb-1.5">
+              Featured picks
+            </span>
+            <h2 className="text-[28px] font-semibold text-[#1a1a1a]">
+              Trending now
             </h2>
-            <p className="text-dark-400 mt-2">Handpicked by our curators</p>
           </div>
-          <Link
-            href="/products?featured=true"
-            className="hidden sm:flex items-center gap-2 text-sm text-primary-400 hover:text-primary-300 font-medium transition-colors"
-          >
-            See All <HiOutlineArrowRight className="w-4 h-4" />
-          </Link>
-        </motion.div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          {loading
-            ? Array.from({ length: 4 }).map((_, i) => (
-                <ProductCardSkeleton key={i} />
-              ))
-            : featuredProducts.map((product, i) => (
-                <ProductCard key={product.id} product={product} index={i} />
-              ))}
+          {/* Filter Tabs */}
+          <div className="flex items-center flex-wrap gap-2">
+            {[
+              { id: "all", label: "All" },
+              { id: "new", label: "New" },
+              { id: "bestseller", label: "Best sellers" },
+              { id: "under500", label: "Under ₱500" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setFilterTab(tab.id as any)}
+                className={`px-4 py-2 rounded-full text-[12px] font-medium border transition-colors cursor-pointer ${
+                  filterTab === tab.id
+                    ? "bg-[#1a1a1a] border-[#1a1a1a] text-white"
+                    : "bg-transparent border-[#ddd] text-[#555] hover:border-[#1a1a1a]"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Dynamic products renderer */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <TbMoodSad className="w-[48px] h-[48px] text-[#ddd] mb-3" />
+            <h3 className="text-[16px] text-[#aaa] font-medium mb-4">No products found</h3>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-6 py-2 border border-[#1a1a1a] text-[#1a1a1a] text-[13px] font-medium hover:bg-[#1a1a1a] hover:text-white transition-colors rounded cursor-pointer"
+            >
+              Refresh
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredProducts.map((product, i) => (
+              <ProductCard key={product.id} product={product} index={i} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* 5. TRUST & REVIEWS */}
+      
+      {/* BLOCK 1: TRUST BAR */}
+      <section className="w-full bg-[#f5f4f0] py-[32px] border-y border-[#e0ddd8]">
+        <div className="max-w-[1280px] w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-center">
+            {trustItems.map((item, idx) => (
+              <div key={item.title} className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 justify-center">
+                {idx > 0 && <div className="hidden lg:block w-[1px] h-12 bg-[#e0ddd8] self-center mr-6" />}
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/40">
+                  {item.icon}
+                </div>
+                <div>
+                  <h4 className="text-[14px] font-medium text-[#1a1a1a]">{item.title}</h4>
+                  <p className="text-[12px] text-[#888] mt-0.5">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Promo Banner */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="relative overflow-hidden rounded-2xl"
-        >
-          <div className="absolute inset-0 gradient-bg opacity-90" />
-          <div className="absolute inset-0">
-            <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-white/5 blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-black/10 blur-2xl" />
-          </div>
-          <div className="relative px-5 py-10 sm:px-12 sm:py-14 lg:px-16 lg:py-16 text-center">
-            <h2
-              className="text-2xl sm:text-3xl lg:text-5xl font-bold text-white mb-3 sm:mb-4"
-              style={{ fontFamily: "var(--font-outfit)" }}
-            >
-              New Season,<br />New Discoveries
+      {/* BLOCK 2: REVIEWS */}
+      <section className="bg-white py-[80px]">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <span className="text-[13px] text-[#888] font-medium uppercase tracking-[0.1em]">
+              What customers say
+            </span>
+            <h2 className="text-[28px] font-bold text-[#1a1a1a] mt-1.5">
+              Loved by thousands
             </h2>
-            <p className="text-white/80 text-sm sm:text-base lg:text-lg max-w-xl mx-auto mb-5 sm:mb-8">
-              Explore our latest collection with up to 40% off on selected items.
-              Limited time offer.
-            </p>
-            <Link
-              href="/products?sort=newest"
-              className="inline-flex items-center gap-2 bg-white text-dark-900 px-8 py-4 rounded-xl font-semibold hover:bg-white/90 transition-all shadow-xl"
-            >
-              Shop Now <HiOutlineArrowRight className="w-5 h-5" />
-            </Link>
           </div>
-        </motion.div>
-      </section>
 
-      {/* New Arrivals */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="flex items-end justify-between mb-10"
-        >
-          <div>
-            <h2
-              className="text-3xl lg:text-4xl font-bold text-white"
-              style={{ fontFamily: "var(--font-outfit)" }}
-            >
-              New <span className="gradient-text">Arrivals</span>
-            </h2>
-            <p className="text-dark-400 mt-2">Fresh additions to our collection</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {customerReviews.map((rev) => (
+              <div 
+                key={rev.author}
+                className="bg-[#fafaf9] border border-[#eeece8] rounded-[12px] p-6 flex flex-col justify-between"
+              >
+                <div>
+                  {/* Stars */}
+                  <div className="flex items-center gap-0.5 mb-4">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <TbStar key={s} className="w-[14px] h-[14px] fill-[#f5a623] text-[#f5a623]" />
+                    ))}
+                  </div>
+                  <p className="text-[14px] text-[#444] leading-[1.65] italic line-clamp-3 mb-6">
+                    &ldquo;{rev.text}&rdquo;
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-[36px] h-[36px] rounded-full bg-[#e8e6e0] flex items-center justify-center text-[13px] text-[#888] font-medium">
+                    {rev.initials}
+                  </div>
+                  <div>
+                    <h5 className="text-[13px] font-semibold text-[#1a1a1a] leading-none mb-1">
+                      {rev.author}
+                    </h5>
+                    <span className="inline-block bg-[#e8f5ee] text-[#0F6E56] text-[11px] font-medium rounded-[3px] px-1.5 py-0.5">
+                      Verified buyer
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-          <Link
-            href="/products?sort=newest"
-            className="hidden sm:flex items-center gap-2 text-sm text-primary-400 hover:text-primary-300 font-medium transition-colors"
-          >
-            View All <HiOutlineArrowRight className="w-4 h-4" />
-          </Link>
-        </motion.div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          {loading
-            ? Array.from({ length: 8 }).map((_, i) => (
-                <ProductCardSkeleton key={i} />
-              ))
-            : newProducts.map((product, i) => (
-                <ProductCard key={product.id} product={product} index={i} />
-              ))}
         </div>
       </section>
+
     </div>
   );
 }

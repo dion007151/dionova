@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { MOCK_CATEGORIES } from "@/lib/mockProducts";
 
 export async function GET() {
   try {
@@ -12,11 +13,8 @@ export async function GET() {
 
     return NextResponse.json(categories);
   } catch (error) {
-    console.error("Categories GET error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch categories" },
-      { status: 500 }
-    );
+    console.error("Categories GET error (falling back to mock categories):", error);
+    return NextResponse.json(MOCK_CATEGORIES);
   }
 }
 

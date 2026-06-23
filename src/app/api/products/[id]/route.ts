@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { MOCK_PRODUCTS } from "@/lib/mockProducts";
 
 export async function GET(
   request: NextRequest,
@@ -31,7 +32,12 @@ export async function GET(
 
     return NextResponse.json(product);
   } catch (error) {
-    console.error("Product GET error:", error);
+    console.error("Product GET error (falling back to mock products):", error);
+    const { id } = await params;
+    const product = MOCK_PRODUCTS.find(p => p.id === id || p.slug === id);
+    if (product) {
+      return NextResponse.json(product);
+    }
     return NextResponse.json(
       { error: "Failed to fetch product" },
       { status: 500 }

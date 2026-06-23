@@ -1,49 +1,81 @@
 import Link from "next/link";
-import { HiOutlineHeart } from "react-icons/hi2";
+import { 
+  HiOutlineHeart,
+} from "react-icons/hi2";
+import { 
+  FaInstagram, 
+  FaTiktok, 
+  FaFacebookF 
+} from "react-icons/fa";
 
 export function Footer() {
   return (
-    <footer className="border-t border-white/5 mt-12 sm:mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-          {/* Brand */}
-          <div className="col-span-2 md:col-span-2 lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-9 h-9 rounded-xl gradient-bg flex items-center justify-center">
-                <span className="text-white font-bold text-sm" style={{ fontFamily: "var(--font-outfit)" }}>D</span>
-              </div>
-              <span
-                className="text-xl font-bold text-white"
-                style={{ fontFamily: "var(--font-outfit)" }}
-              >
-                DION<span className="gradient-text">OVA</span>
-              </span>
-            </Link>
-            <p className="text-dark-400 text-sm leading-relaxed">
-              Discover extraordinary products. A next-generation marketplace
-              with curated collections and premium shopping experience.
+    <footer className="w-full bg-[#111] text-white">
+      {/* NEWSLETTER STRIP (above main footer) */}
+      <div className="bg-[#1a1a1a] border-b border-[#222] py-[48px]">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div>
+            <h3 className="text-[22px] font-medium text-white mb-1" style={{ fontFamily: "var(--font-outfit)" }}>
+              Stay in the loop
+            </h3>
+            <p className="text-[14px] text-[#888]">
+              New arrivals, exclusive offers, no spam.
             </p>
           </div>
+          <div className="flex flex-col sm:flex-row gap-[12px] max-w-md w-full">
+            <input
+              type="email"
+              placeholder="your@email.com"
+              className="bg-[#2a2a2a] border border-[#333] text-white placeholder-[#888] h-[44px] px-4 rounded-[4px] text-sm focus:outline-none focus:border-white/40 flex-1"
+            />
+            <button className="bg-white text-[#1a1a1a] h-[44px] px-6 rounded-[4px] font-medium text-sm hover:bg-white/90 transition-colors cursor-pointer">
+              Subscribe
+            </button>
+          </div>
+        </div>
+      </div>
 
-          {/* Quick Links */}
-          <div>
-            <h3
-              className="text-white font-semibold mb-4"
-              style={{ fontFamily: "var(--font-outfit)" }}
-            >
-              Quick Links
+      {/* MAIN FOOTER */}
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-[64px] pb-[40px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-8 lg:gap-12 mb-[48px]">
+          {/* Col 1 (wider) */}
+          <div className="lg:col-span-4 flex flex-col gap-4">
+            <Link href="/" className="flex items-center">
+              <span className="text-[15px] font-semibold tracking-[0.15em] text-white" style={{ fontFamily: "var(--font-outfit)" }}>
+                DIONOVA
+              </span>
+              <span className="w-[6px] h-[6px] bg-white inline-block ml-[2px] self-end mb-[4.5px]" />
+            </Link>
+            <p className="text-[13px] text-[#666] leading-relaxed">
+              Premium goods, extraordinary life.
+            </p>
+            <div className="flex items-center gap-[16px] mt-2">
+              <a href="#" className="text-[#666] hover:text-white transition-colors text-lg" aria-label="Instagram">
+                <FaInstagram />
+              </a>
+              <a href="#" className="text-[#666] hover:text-white transition-colors text-lg" aria-label="TikTok">
+                <FaTiktok />
+              </a>
+              <a href="#" className="text-[#666] hover:text-white transition-colors text-lg" aria-label="Facebook">
+                <FaFacebookF />
+              </a>
+            </div>
+          </div>
+
+          {/* Col 2 */}
+          <div className="lg:col-span-2/12 flex flex-col">
+            <h3 className="text-[11px] text-[#555] tracking-[0.1em] font-semibold uppercase mb-4">
+              Shop
             </h3>
-            <ul className="space-y-3">
+            <ul className="flex flex-col gap-3">
               {[
-                { name: "All Products", href: "/products" },
-                { name: "Featured", href: "/products?featured=true" },
                 { name: "New Arrivals", href: "/products?sort=newest" },
+                { name: "Best Sellers", href: "/products" },
+                { name: "Sale", href: "/products" },
+                { name: "All Products", href: "/products" },
               ].map((link) => (
                 <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-dark-400 hover:text-primary-400 text-sm transition-colors"
-                  >
+                  <Link href={link.href} className="text-[13px] text-[#666] hover:text-white transition-colors">
                     {link.name}
                   </Link>
                 </li>
@@ -51,57 +83,64 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Support */}
-          <div>
-            <h3
-              className="text-white font-semibold mb-4"
-              style={{ fontFamily: "var(--font-outfit)" }}
-            >
+          {/* Col 3 */}
+          <div className="lg:col-span-2/12 flex flex-col">
+            <h3 className="text-[11px] text-[#555] tracking-[0.1em] font-semibold uppercase mb-4">
               Support
             </h3>
-            <ul className="space-y-3">
-              {["Shipping Info", "Returns Policy", "Contact Us"].map((name) => (
-                <li key={name}>
-                  <span className="text-dark-400 text-sm cursor-default">
-                    {name}
-                  </span>
+            <ul className="flex flex-col gap-3">
+              {[
+                { name: "FAQ", href: "/shipping-info" },
+                { name: "Shipping Info", href: "/shipping-info" },
+                { name: "Returns Policy", href: "/returns-policy" },
+                { name: "Contact Us", href: "/contact-us" },
+              ].map((link) => (
+                <li key={link.name}>
+                  <Link href={link.href} className="text-[13px] text-[#666] hover:text-white transition-colors">
+                    {link.name}
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Newsletter */}
-          <div className="col-span-2 sm:col-span-1">
-            <h3
-              className="text-white font-semibold mb-3 sm:mb-4"
-              style={{ fontFamily: "var(--font-outfit)" }}
-            >
-              Stay Updated
+          {/* Col 4 */}
+          <div className="lg:col-span-2/12 flex flex-col">
+            <h3 className="text-[11px] text-[#555] tracking-[0.1em] font-semibold uppercase mb-4">
+              Company
             </h3>
-            <p className="text-dark-400 text-sm mb-3 sm:mb-4">
-              Get notified about new products and exclusive deals.
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                placeholder="your@email.com"
-                className="input-field flex-1 min-w-0 py-2.5 text-sm"
-              />
-              <button className="btn-primary py-2.5 px-4 text-sm flex-shrink-0">
-                Join
-              </button>
-            </div>
+            <ul className="flex flex-col gap-3">
+              {[
+                { name: "About Us", href: "/about" },
+                { name: "Blog", href: "#" },
+                { name: "Privacy Policy", href: "/privacy-policy" },
+                { name: "Terms of Service", href: "/privacy-policy" },
+              ].map((link) => (
+                <li key={link.name}>
+                  <Link href={link.href} className="text-[13px] text-[#666] hover:text-white transition-colors">
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
-        <div className="border-t border-white/5 mt-8 sm:mt-12 pt-6 sm:pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-          <p className="text-dark-500 text-sm">
-            © 2026 DIONOVA. All rights reserved.
+        {/* BOTTOM BAR */}
+        <div className="border-t border-[#222] pt-[24px] flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-[12px] text-[#555]">
+            © 2025 DIONOVA. All rights reserved.
           </p>
-          <p className="text-dark-500 text-sm flex items-center gap-1">
-            Built with <HiOutlineHeart className="w-4 h-4 text-primary-500" />{" "}
-            for extraordinary experiences
-          </p>
+          <div className="flex items-center gap-2">
+            {["GCash", "Visa", "Mastercard", "COD"].map((badge) => (
+              <span 
+                key={badge} 
+                className="bg-[#222] text-[#888] text-[11px] font-medium rounded-[3px] px-2 py-[3px] border border-transparent"
+              >
+                {badge}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </footer>

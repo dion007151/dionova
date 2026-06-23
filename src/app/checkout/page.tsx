@@ -121,10 +121,9 @@ export default function CheckoutPage() {
         }
       }
 
-      setOrderId(order.id);
-      setOrderComplete(true);
       clearCart();
       toast.success("Order placed successfully!");
+      router.push(`/order-confirmation?orderId=${order.id}&total=${grandTotal}&email=${encodeURIComponent(form.customerEmail)}`);
     } catch (error) {
       console.error("Checkout error:", error);
       toast.error("Something went wrong. Please try again.");
