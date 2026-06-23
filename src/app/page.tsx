@@ -5,14 +5,11 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { ProductCardSkeleton } from "@/components/ui/Shared";
-import {
-  HiOutlineSparkles,
-  HiOutlineShoppingBag,
-} from "react-icons/hi2";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { 
   TbDeviceLaptop, 
   TbHanger, 
-  TbHome, 
+  TbHome2, 
   TbSparkles, 
   TbRun, 
   TbBook,
@@ -22,25 +19,27 @@ import {
   TbRefresh,
   TbMedal,
   TbStar,
-  TbMoodSad
+  TbArrowRight,
+  TbShoppingBag,
+  TbFlame,
 } from "react-icons/tb";
 
 const categoryIconMap: Record<string, React.ReactNode> = {
-  "electronics": <TbDeviceLaptop className="w-8 h-8" />,
-  "fashion": <TbHanger className="w-8 h-8" />,
-  "home-living": <TbHome className="w-8 h-8" />,
-  "beauty": <TbSparkles className="w-8 h-8" />,
-  "sports": <TbRun className="w-8 h-8" />,
-  "books": <TbBook className="w-8 h-8" />,
+  "electronics": <TbDeviceLaptop className="w-7 h-7" />,
+  "fashion": <TbHanger className="w-7 h-7" />,
+  "home-living": <TbHome2 className="w-7 h-7" />,
+  "beauty": <TbSparkles className="w-7 h-7" />,
+  "sports": <TbRun className="w-7 h-7" />,
+  "books": <TbBook className="w-7 h-7" />,
 };
 
-const categoryBgColors = [
-  "bg-[#f5f4f0] hover:bg-[#d9d5ce]",
-  "bg-[#ede9e3] hover:bg-[#d9d5ce]",
-  "bg-[#e8e4dd] hover:bg-[#d9d5ce]",
-  "bg-[#f5f4f0] hover:bg-[#d9d5ce]",
-  "bg-[#ede9e3] hover:bg-[#d9d5ce]",
-  "bg-[#e8e4dd] hover:bg-[#d9d5ce]"
+const categoryAccents = [
+  { bg: "rgba(240,90,31,0.08)", border: "rgba(240,90,31,0.3)", text: "#f57946" },
+  { bg: "rgba(99,102,241,0.08)", border: "rgba(99,102,241,0.3)", text: "#818cf8" },
+  { bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.3)", text: "#34d399" },
+  { bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.3)", text: "#fbbf24" },
+  { bg: "rgba(236,72,153,0.08)", border: "rgba(236,72,153,0.3)", text: "#f472b6" },
+  { bg: "rgba(14,165,233,0.08)", border: "rgba(14,165,233,0.3)", text: "#38bdf8" },
 ];
 
 interface Product {
@@ -65,44 +64,16 @@ interface Category {
 }
 
 const trustItems = [
-  {
-    icon: <TbTruck className="w-6 h-6 text-[#1a1a1a]" />,
-    title: "Free shipping",
-    desc: "On orders over ₱999",
-  },
-  {
-    icon: <TbLock className="w-6 h-6 text-[#1a1a1a]" />,
-    title: "Secure payment",
-    desc: "256-bit SSL encryption",
-  },
-  {
-    icon: <TbRefresh className="w-6 h-6 text-[#1a1a1a]" />,
-    title: "Easy returns",
-    desc: "30-day hassle-free returns",
-  },
-  {
-    icon: <TbMedal className="w-6 h-6 text-[#1a1a1a]" />,
-    title: "Premium quality",
-    desc: "Curated for excellence",
-  },
+  { icon: <TbTruck className="w-6 h-6" />, title: "Free shipping", desc: "On orders over ₱999", color: "#f57946" },
+  { icon: <TbLock className="w-6 h-6" />, title: "Secure payment", desc: "256-bit SSL encryption", color: "#34d399" },
+  { icon: <TbRefresh className="w-6 h-6" />, title: "Easy returns", desc: "30-day hassle-free", color: "#818cf8" },
+  { icon: <TbMedal className="w-6 h-6" />, title: "Premium quality", desc: "Curated for excellence", color: "#fbbf24" },
 ];
 
 const customerReviews = [
-  {
-    text: "Absolutely love everything I've ordered — quality is unreal for the price.",
-    author: "Sarah K.",
-    initials: "SK"
-  },
-  {
-    text: "Fast delivery and beautiful packaging. Will definitely be ordering again.",
-    author: "Michael T.",
-    initials: "MT"
-  },
-  {
-    text: "Found my new go-to shop. The curation is spot on.",
-    author: "Elena R.",
-    initials: "ER"
-  }
+  { text: "Absolutely love everything I've ordered — quality is unreal for the price.", author: "Sarah K.", initials: "SK", rating: 5 },
+  { text: "Fast delivery and beautiful packaging. Will definitely be ordering again.", author: "Michael T.", initials: "MT", rating: 5 },
+  { text: "Found my new go-to shop. The curation is spot on and super premium.", author: "Elena R.", initials: "ER", rating: 5 },
 ];
 
 export default function HomePage() {
@@ -112,12 +83,9 @@ export default function HomePage() {
   const [filterTab, setFilterTab] = useState<"all" | "new" | "bestseller" | "under500">("all");
 
   const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  });
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, 150]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, 120]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
 
   useEffect(() => {
     async function fetchData() {
@@ -128,7 +96,6 @@ export default function HomePage() {
         ]);
         const featuredData = await featuredRes.json();
         const categoriesData = await categoriesRes.json();
-
         setFeaturedProducts(Array.isArray(featuredData.products) ? featuredData.products : []);
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       } catch (error) {
@@ -140,184 +107,273 @@ export default function HomePage() {
     fetchData();
   }, []);
 
-  // Filter products according to selected filter tab
   const getFilteredProducts = () => {
     switch (filterTab) {
-      case "new":
-        return featuredProducts.slice(0, 4); // Simulate newest
-      case "bestseller":
-        return featuredProducts.filter(p => p.featured).slice(0, 4);
-      case "under500":
-        return featuredProducts.filter(p => p.price < 500).slice(0, 4);
-      case "all":
-      default:
-        return featuredProducts.slice(0, 8);
+      case "new": return featuredProducts.slice(0, 4);
+      case "bestseller": return featuredProducts.filter(p => p.featured).slice(0, 4);
+      case "under500": return featuredProducts.filter(p => p.price < 500).slice(0, 4);
+      default: return featuredProducts.slice(0, 8);
     }
   };
 
   const filteredProducts = getFilteredProducts();
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* 2. HERO SECTION */}
-      <section ref={heroRef} className="relative min-h-[600px] flex items-center bg-white overflow-hidden border-b border-[#eee]">
-        <div className="w-full max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-10 items-stretch">
-          
-          {/* LEFT COLUMN (55%) */}
-          <motion.div 
-            style={{ y: heroY, opacity: heroOpacity }}
-            className="lg:col-span-6 px-6 sm:px-12 lg:pl-20 lg:pr-12 py-16 sm:py-20 lg:py-24 flex flex-col justify-center text-left"
-          >
-            <span className="text-[11px] font-medium tracking-[0.12em] text-[#888] uppercase mb-3">
-              New Season 2025
-            </span>
-            
-            <h1 
-              className="text-[40px] sm:text-[52px] font-bold text-[#1a1a1a] leading-[1.1] mb-6"
+    <div className="min-h-screen">
+
+      {/* ============ HERO ============ */}
+      <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden">
+        {/* Animated ambient glows */}
+        <div className="hero-glow w-[600px] h-[600px] bg-primary-500/15 top-[-200px] left-[-100px] animate-pulse-glow" />
+        <div className="hero-glow w-[400px] h-[400px] bg-purple-500/10 bottom-[-100px] right-[-50px] animate-float-delayed" />
+        <div className="hero-glow w-[300px] h-[300px] bg-primary-400/10 top-[30%] right-[20%]" />
+
+        {/* Grid pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+            backgroundSize: "60px 60px",
+          }}
+        />
+
+        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center z-10">
+
+          {/* Left: Text */}
+          <motion.div style={{ y: heroY, opacity: heroOpacity }} className="flex flex-col items-start">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="flex items-center gap-2 mb-6 px-4 py-2 rounded-full border border-primary-500/30 bg-primary-500/10"
+            >
+              <TbFlame className="w-4 h-4 text-primary-400 animate-bounce-soft" />
+              <span className="text-xs font-semibold text-primary-300 tracking-widest uppercase">New Season 2025</span>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-[1.05] mb-6"
               style={{ fontFamily: "var(--font-outfit)" }}
             >
-              Discover <span className="italic font-normal">extraordinary</span> things.
-            </h1>
+              Discover{" "}
+              <span className="gradient-text italic font-normal">extraordinary</span>
+              <br />things.
+            </motion.h1>
 
-            <p className="text-[16px] text-[#666] leading-[1.6] max-w-[420px] mb-8">
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-dark-300 text-lg leading-relaxed max-w-md mb-10"
+            >
               Curated premium products delivered to your door. Discover what makes everyday life exceptional.
-            </p>
+            </motion.p>
 
-            {/* CTA Row */}
-            <div className="flex items-center gap-6 mb-12">
-              <Link 
-                href="/products" 
-                className="h-[48px] px-8 bg-[#1a1a1a] text-white text-[14px] font-medium rounded-[4px] flex items-center justify-center hover:bg-[#333] transition-colors"
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="flex flex-col sm:flex-row gap-4 mb-12"
+            >
+              <Link
+                href="/products"
+                className="btn-primary px-8 py-4 text-base rounded-xl glow-orange-sm flex items-center gap-2 group"
               >
-                Shop now
+                <TbShoppingBag className="w-5 h-5" />
+                Shop Now
+                <TbArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
               </Link>
-              <Link 
-                href="/products?featured=true" 
-                className="text-[14px] font-medium text-[#1a1a1a] hover:underline"
+              <Link
+                href="/products?featured=true"
+                className="btn-secondary px-8 py-4 text-base rounded-xl"
               >
-                View lookbook &rarr;
+                View Lookbook
               </Link>
-            </div>
+            </motion.div>
 
-            {/* Stats row */}
-            <div className="border-t border-[#eee] pt-6 grid grid-cols-3 gap-4">
+            {/* Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="flex items-center gap-8"
+            >
               {[
                 { value: "500+", label: "Products" },
-                { value: "10k+", label: "Customers" },
-                { value: "4.9", label: "Rating" }
-              ].map((stat, idx) => (
-                <div key={stat.label} className="flex items-center gap-4">
-                  {idx > 0 && <div className="h-8 w-[1px] bg-[#eee]" />}
+                { value: "10k+", label: "Happy Customers" },
+                { value: "4.9★", label: "Average Rating" },
+              ].map((stat, i) => (
+                <div key={stat.label} className="flex items-center gap-5">
+                  {i > 0 && <div className="w-px h-10 bg-white/10" />}
                   <div>
-                    <div className="text-[22px] font-semibold text-[#1a1a1a] leading-none mb-1">
-                      {stat.value}
-                    </div>
-                    <div className="text-[12px] text-[#888]">{stat.label}</div>
+                    <div className="text-2xl font-bold text-white">{stat.value}</div>
+                    <div className="text-xs text-dark-400 mt-0.5">{stat.label}</div>
                   </div>
                 </div>
               ))}
-            </div>
+            </motion.div>
           </motion.div>
 
-          {/* RIGHT COLUMN (45%) */}
-          <div className="lg:col-span-4 bg-[#f5f4f0] p-8 sm:p-12 lg:p-0 flex items-center justify-center relative min-h-[450px]">
-            {/* Main Product Image Placeholder */}
-            <div className="w-[320px] h-[400px] sm:w-[400px] sm:h-[500px] bg-[#e8e6e0] rounded-[8px] overflow-hidden shadow-sm relative flex items-center justify-center">
-              <img 
-                src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=600&auto=format&fit=crop"
-                alt="Featured Look" 
-                className="w-full h-full object-cover mix-blend-multiply opacity-80"
+          {/* Right: Lottie Animation */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.7 }}
+            className="relative flex items-center justify-center"
+          >
+            {/* Glow ring behind */}
+            <div className="absolute w-[400px] h-[400px] rounded-full bg-primary-500/10 blur-3xl animate-pulse-glow" />
+
+            <div className="relative w-full max-w-[500px]">
+              <DotLottieReact
+                src="https://lottie.host/embed/4fbbbb4c-c3ef-4434-b048-2e5c0e3f9f71/GZfH8bCNlK.lottie"
+                loop
+                autoplay
               />
             </div>
 
-            {/* Floating Product Card bottom-left */}
-            <div className="absolute bottom-6 left-6 sm:bottom-12 sm:left-12 bg-white rounded-[8px] p-3 sm:p-4 border border-[#eee] flex items-center gap-3 shadow-md max-w-[220px]">
-              <div className="w-8 h-8 rounded bg-[#f5f4f0] flex items-center justify-center text-[#1a1a1a]">
-                <TbPackage className="w-5 h-5" />
+            {/* Floating cards */}
+            <div className="absolute top-8 -left-4 sm:left-4 glass-card px-4 py-3 flex items-center gap-3 animate-float shadow-xl max-w-[180px]">
+              <div className="w-9 h-9 rounded-xl gradient-bg flex items-center justify-center flex-shrink-0">
+                <TbPackage className="w-5 h-5 text-white" />
               </div>
               <div>
-                <span className="text-[10px] text-[#888] block uppercase">Just arrived</span>
-                <span className="text-[13px] font-bold text-[#1a1a1a] block truncate max-w-[140px]">Nova Audio Headset</span>
-                <span className="text-[13px] text-[#888] block">₱8,990</span>
+                <span className="text-[10px] text-dark-400 block">Just arrived</span>
+                <span className="text-[12px] font-bold text-white block">Nova Headset</span>
+                <span className="text-[11px] text-primary-400">₱8,990</span>
               </div>
             </div>
 
-            {/* Category pills floating top-right */}
-            <div className="absolute top-6 right-6 sm:top-12 sm:right-12 flex flex-col gap-2 z-10">
-              {["Electronics", "Fashion", "Home"].map((pill) => (
-                <Link
-                  key={pill}
-                  href={`/products?category=${pill.toLowerCase().replace(" & ", "-")}`}
-                  className="bg-white border border-[#ddd] rounded-[20px] text-[11px] font-medium text-[#1a1a1a] px-3.5 py-1 text-center shadow-xs hover:border-[#1a1a1a] transition-all"
-                >
-                  {pill}
-                </Link>
-              ))}
+            <div className="absolute bottom-8 -right-4 sm:right-4 glass-card px-4 py-3 flex items-center gap-3 animate-float-delayed shadow-xl max-w-[160px]">
+              <div className="w-9 h-9 rounded-xl bg-green-500/20 border border-green-500/30 flex items-center justify-center flex-shrink-0">
+                <TbTruck className="w-5 h-5 text-green-400" />
+              </div>
+              <div>
+                <span className="text-[10px] text-dark-400 block">Delivered</span>
+                <span className="text-[11px] font-bold text-white">Free shipping!</span>
+              </div>
             </div>
+          </motion.div>
+        </div>
+
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0d0e12] to-transparent" />
+      </section>
+
+      {/* ============ TRUST BAR ============ */}
+      <section className="relative py-8 border-y border-white/5">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary-500/5 via-transparent to-primary-500/5" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {trustItems.map((item, i) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                viewport={{ once: true }}
+                className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left"
+              >
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: `${item.color}18`, border: `1px solid ${item.color}40`, color: item.color }}
+                >
+                  {item.icon}
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-white">{item.title}</h4>
+                  <p className="text-xs text-dark-400 mt-0.5">{item.desc}</p>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* 3. CATEGORIES SECTION */}
+      {/* ============ CATEGORIES ============ */}
       {categories.length > 0 && (
-        <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-8">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-10"
+          >
             <div>
-              <span className="text-[13px] text-[#888] tracking-[0.1em] font-medium uppercase mb-1.5 block">
-                Shop by category
-              </span>
-              <h2 className="text-[28px] font-semibold text-[#1a1a1a]">
+              <span className="text-xs font-semibold text-primary-400 tracking-widest uppercase mb-2 block">Shop by category</span>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white" style={{ fontFamily: "var(--font-outfit)" }}>
                 Find what you love
               </h2>
             </div>
-            <Link 
-              href="/products?view=categories" 
-              className="text-[13px] text-[#1a1a1a] font-medium hover:underline mt-2 sm:mt-0 flex items-center gap-1"
-            >
-              See all categories &rarr;
+            <Link href="/products" className="mt-4 sm:mt-0 flex items-center gap-1 text-sm text-dark-400 hover:text-primary-400 transition-colors group">
+              See all <TbArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
-          </div>
+          </motion.div>
 
-          {/* Grid of square categories */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {categories.map((cat, i) => {
-              const bg = categoryBgColors[i % categoryBgColors.length];
-              const icon = categoryIconMap[cat.slug] || <TbPackage className="w-8 h-8" />;
+              const accent = categoryAccents[i % categoryAccents.length];
+              const icon = categoryIconMap[cat.slug] || <TbPackage className="w-7 h-7" />;
               return (
-                <Link 
+                <motion.div
                   key={cat.id}
-                  href={`/products?category=${cat.slug}`}
-                  className={`aspect-square ${bg} rounded-[12px] flex flex-col items-center justify-center p-6 transition-all duration-200 group cursor-pointer`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.08 }}
+                  viewport={{ once: true }}
                 >
-                  <div className="text-[#1a1a1a] mb-3 transition-transform duration-200 ease-out group-hover:scale-110">
-                    {icon}
-                  </div>
-                  <span className="text-[13px] font-medium text-[#1a1a1a] text-center block">
-                    {cat.name}
-                  </span>
-                  <span className="text-[11px] text-[#888] mt-1 block">
-                    {cat._count.products} products
-                  </span>
-                </Link>
+                  <Link
+                    href={`/products?category=${cat.slug}`}
+                    className="aspect-square rounded-2xl flex flex-col items-center justify-center p-5 transition-all duration-300 group cursor-pointer block relative overflow-hidden"
+                    style={{
+                      background: accent.bg,
+                      border: `1px solid ${accent.border}`,
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ background: `${accent.bg}` }}
+                    />
+                    <div className="relative z-10 flex flex-col items-center">
+                      <div
+                        className="mb-3 transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1"
+                        style={{ color: accent.text }}
+                      >
+                        {icon}
+                      </div>
+                      <span className="text-[13px] font-semibold text-white text-center block">
+                        {cat.name}
+                      </span>
+                      <span className="text-[11px] mt-1 block" style={{ color: accent.text }}>
+                        {cat._count.products} items
+                      </span>
+                    </div>
+                  </Link>
+                </motion.div>
               );
             })}
           </div>
         </section>
       )}
 
-      {/* 4. PRODUCT GRID SECTION */}
-      <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-[80px] pb-16">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
+      {/* ============ PRODUCTS GRID ============ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10"
+        >
           <div>
-            <span className="text-[11px] text-[#888] tracking-[0.1em] font-medium uppercase block mb-1.5">
-              Featured picks
-            </span>
-            <h2 className="text-[28px] font-semibold text-[#1a1a1a]">
-              Trending now
+            <span className="text-xs font-semibold text-primary-400 tracking-widest uppercase block mb-2">Featured picks</span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white" style={{ fontFamily: "var(--font-outfit)" }}>
+              Trending now 🔥
             </h2>
           </div>
 
-          {/* Filter Tabs */}
           <div className="flex items-center flex-wrap gap-2">
             {[
               { id: "all", label: "All" },
@@ -328,19 +384,18 @@ export default function HomePage() {
               <button
                 key={tab.id}
                 onClick={() => setFilterTab(tab.id as any)}
-                className={`px-4 py-2 rounded-full text-[12px] font-medium border transition-colors cursor-pointer ${
+                className={`px-4 py-2 rounded-full text-[12px] font-semibold border transition-all cursor-pointer ${
                   filterTab === tab.id
-                    ? "bg-[#1a1a1a] border-[#1a1a1a] text-white"
-                    : "bg-transparent border-[#ddd] text-[#555] hover:border-[#1a1a1a]"
+                    ? "gradient-bg border-transparent text-white shadow-lg shadow-primary-500/20"
+                    : "bg-white/5 border-white/10 text-dark-300 hover:border-white/20 hover:text-white"
                 }`}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        {/* Dynamic products renderer */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -348,12 +403,18 @@ export default function HomePage() {
             ))}
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <TbMoodSad className="w-[48px] h-[48px] text-[#ddd] mb-3" />
-            <h3 className="text-[16px] text-[#aaa] font-medium mb-4">No products found</h3>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="px-6 py-2 border border-[#1a1a1a] text-[#1a1a1a] text-[13px] font-medium hover:bg-[#1a1a1a] hover:text-white transition-colors rounded cursor-pointer"
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-48 h-48 mb-4">
+              <DotLottieReact
+                src="https://lottie.host/embed/b9b75d90-0028-448d-bad6-b13da4b5f8a8/3Z6XBYARYO.lottie"
+                loop
+                autoplay
+              />
+            </div>
+            <h3 className="text-xl text-dark-300 font-semibold mb-3">No products found</h3>
+            <button
+              onClick={() => window.location.reload()}
+              className="btn-primary"
             >
               Refresh
             </button>
@@ -365,79 +426,109 @@ export default function HomePage() {
             ))}
           </div>
         )}
+
+        <div className="text-center mt-10">
+          <Link href="/products" className="btn-secondary px-10 py-4 text-base rounded-xl inline-flex items-center gap-2 group">
+            View all products <TbArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </div>
       </section>
 
-      {/* 5. TRUST & REVIEWS */}
-      
-      {/* BLOCK 1: TRUST BAR */}
-      <section className="w-full bg-[#f5f4f0] py-[32px] border-y border-[#e0ddd8]">
-        <div className="max-w-[1280px] w-full mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-center">
-            {trustItems.map((item, idx) => (
-              <div key={item.title} className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 justify-center">
-                {idx > 0 && <div className="hidden lg:block w-[1px] h-12 bg-[#e0ddd8] self-center mr-6" />}
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/40">
-                  {item.icon}
-                </div>
-                <div>
-                  <h4 className="text-[14px] font-medium text-[#1a1a1a]">{item.title}</h4>
-                  <p className="text-[12px] text-[#888] mt-0.5">{item.desc}</p>
-                </div>
-              </div>
-            ))}
+      {/* ============ ANIMATED BANNER ============ */}
+      <section className="relative py-20 overflow-hidden my-8">
+        <div className="absolute inset-0 gradient-bg opacity-10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-500/5 to-transparent" />
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-10 z-10">
+          <div className="flex-1 text-center lg:text-left">
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-4xl sm:text-5xl font-bold text-white mb-4" style={{ fontFamily: "var(--font-outfit)" }}
+            >
+              Shop smarter,<br />
+              <span className="gradient-text">live better.</span>
+            </motion.h2>
+            <p className="text-dark-300 text-lg mb-8 max-w-md mx-auto lg:mx-0">
+              Join over 10,000 happy customers discovering premium products every day.
+            </p>
+            <Link href="/products" className="btn-primary px-10 py-4 text-base rounded-xl inline-flex items-center gap-2 group glow-orange">
+              Start Shopping <TbArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="w-full lg:w-[380px] flex-shrink-0">
+            <DotLottieReact
+              src="https://lottie.host/embed/c5fec8f5-5d95-440d-b7b9-fc51e52c0e10/kVCRuyN7zQ.lottie"
+              loop
+              autoplay
+            />
           </div>
         </div>
       </section>
 
-      {/* BLOCK 2: REVIEWS */}
-      <section className="bg-white py-[80px]">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <span className="text-[13px] text-[#888] font-medium uppercase tracking-[0.1em]">
-              What customers say
-            </span>
-            <h2 className="text-[28px] font-bold text-[#1a1a1a] mt-1.5">
-              Loved by thousands
-            </h2>
-          </div>
+      {/* ============ REVIEWS ============ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <span className="text-xs font-semibold text-primary-400 tracking-widest uppercase block mb-2">What customers say</span>
+          <h2 className="text-3xl sm:text-4xl font-bold text-white" style={{ fontFamily: "var(--font-outfit)" }}>
+            Loved by thousands ❤️
+          </h2>
+        </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {customerReviews.map((rev) => (
-              <div 
-                key={rev.author}
-                className="bg-[#fafaf9] border border-[#eeece8] rounded-[12px] p-6 flex flex-col justify-between"
-              >
-                <div>
-                  {/* Stars */}
-                  <div className="flex items-center gap-0.5 mb-4">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <TbStar key={s} className="w-[14px] h-[14px] fill-[#f5a623] text-[#f5a623]" />
-                    ))}
-                  </div>
-                  <p className="text-[14px] text-[#444] leading-[1.65] italic line-clamp-3 mb-6">
-                    &ldquo;{rev.text}&rdquo;
-                  </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {customerReviews.map((rev, i) => (
+            <motion.div
+              key={rev.author}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.15 }}
+              viewport={{ once: true }}
+              className="glass-card p-6 flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center gap-0.5 mb-4">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <TbStar key={s} className="w-4 h-4 fill-[#f5a623] text-[#f5a623]" style={{ fill: "#f5a623" }} />
+                  ))}
                 </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-[36px] h-[36px] rounded-full bg-[#e8e6e0] flex items-center justify-center text-[13px] text-[#888] font-medium">
-                    {rev.initials}
-                  </div>
-                  <div>
-                    <h5 className="text-[13px] font-semibold text-[#1a1a1a] leading-none mb-1">
-                      {rev.author}
-                    </h5>
-                    <span className="inline-block bg-[#e8f5ee] text-[#0F6E56] text-[11px] font-medium rounded-[3px] px-1.5 py-0.5">
-                      Verified buyer
-                    </span>
-                  </div>
+                <p className="text-dark-200 leading-relaxed italic mb-6">
+                  &ldquo;{rev.text}&rdquo;
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full gradient-bg flex items-center justify-center text-white text-sm font-bold">
+                  {rev.initials}
+                </div>
+                <div>
+                  <h5 className="text-sm font-semibold text-white">{rev.author}</h5>
+                  <span className="text-xs bg-green-500/15 text-green-400 border border-green-500/20 rounded-full px-2 py-0.5">
+                    Verified buyer
+                  </span>
                 </div>
               </div>
-            ))}
-          </div>
+            </motion.div>
+          ))}
         </div>
       </section>
 
     </div>
   );
 }
+
+
+
+
+

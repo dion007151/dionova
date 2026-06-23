@@ -44,8 +44,8 @@
 
   body {
     font-family: var(--font-body);
-    background-color: #ffffff;
-    color: #1a1a1a;
+    background-color: #0d0e12;
+    color: #e2e3e5;
     overflow-x: hidden;
     /* Ensure touch targets are comfortable */
     -webkit-tap-highlight-color: transparent;
